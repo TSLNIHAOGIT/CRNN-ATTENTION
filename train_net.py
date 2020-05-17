@@ -196,7 +196,8 @@ if True:
 
             total_loss += batch_loss
 
-            variables = encoder.variables + decoder.variables
+            # variables = encoder.variables + decoder.variables
+            variables=encoder.trainable_variables+decoder.trainable_variables
 
             gradients = tape.gradient(loss, variables)
 
