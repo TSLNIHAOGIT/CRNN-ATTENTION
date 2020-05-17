@@ -2,15 +2,17 @@ from __future__ import absolute_import, division, print_function
 
 import tensorflow as tf
 
-tf.enable_eager_execution()
+# tf.enable_eager_execution()
 
 
 def gru(units):
-    if tf.test.is_gpu_available():
-        return tf.keras.layers.CuDNNGRU(units,
-                                        return_sequences=True,
-                                        return_state=True,
-                                        recurrent_initializer='glorot_uniform')
+    if False:
+        pass
+    # if tf.test.is_gpu_available():
+    #     return tf.keras.layers.CuDNNGRU(units,
+    #                                     return_sequences=True,
+    #                                     return_state=True,
+    #                                     recurrent_initializer='glorot_uniform')
     else:
         return tf.keras.layers.GRU(units,
                                    return_sequences=True,
