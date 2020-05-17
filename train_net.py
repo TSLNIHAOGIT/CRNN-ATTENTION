@@ -143,7 +143,7 @@ checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 EPOCHS = 50
 
 logdir = "./logs/"
-# writer = tf.contrib.summary.create_file_writer(logdir)
+writer = tf.summary.create_file_writer(logdir)
 # writer.set_as_default()
 # print('dataset',dataset)
 
@@ -153,8 +153,8 @@ logdir = "./logs/"
 
 
 
-# with tf.contrib.summary.record_summaries_every_n_global_steps(10):
-if True:
+with writer.as_default():
+# if True:
     for epoch in range(EPOCHS):
         start = time.time()
 
@@ -209,10 +209,10 @@ if True:
 
             acc = compute_accuracy(ground_truths, preds)
 
-            # tf.contrib.summary.scalar('loss', batch_loss)
-            # tf.contrib.summary.scalar('accuracy', acc)
-            # tf.contrib.summary.scalar('lr', learning_rate.numpy())
-            # writer.flush()
+            tf.summary.scalar('loss', batch_loss,step=epoch+batch)
+            tf.summary.scalar('accuracy', acc,step=epoch+batch)
+            tf.summary.scalar('lr', learning_rate.numpy(),step=epoch+batch)
+            writer.flush()
 
             if batch % 9 == 0:
                 print('Epoch {} Batch {}/{} Loss {:.4f}  acc {:f}'.format(epoch + 1, batch, N_BATCH,
