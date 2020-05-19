@@ -57,7 +57,7 @@ def create_dataset_from_file(root, file_path):
 
 
 def load_dataset(root):
-    img_paths_tensor, labels = create_dataset_from_file(root, "annotation_train.txt")
+    img_paths_tensor, labels = create_dataset_from_file(root, "annotation_attention.txt")
 
     labels = [label for label in labels]
 
@@ -166,6 +166,8 @@ with writer.as_default():
         for (batch, (inp, targ, ground_truths)) in enumerate(dataset):
             # print('batch',batch)
             # print('inp shape',inp.shape)#inp shape (64, 32, 100, 1, 1)
+            step=epoch*N_BATCH+batch
+            print('epoch={},step={},batch={}'.format(epoch,step,batch))
             loss = 0
             # global_step.assign_add(1)
 
@@ -209,9 +211,9 @@ with writer.as_default():
 
             acc = compute_accuracy(ground_truths, preds)
 
-            tf.summary.scalar('loss', batch_loss,step=epoch+batch)
-            tf.summary.scalar('accuracy', acc,step=epoch+batch)
-            tf.summary.scalar('lr', learning_rate.numpy(),step=epoch+batch)
+            tf.summary.scalar('loss', batch_loss,step=step)
+            tf.summary.scalar('accuracy', acc,step=step)
+            tf.summary.scalar('lr', learning_rate.numpy(),step=step)
             writer.flush()
 
             if batch % 9 == 0:
@@ -223,7 +225,7 @@ with writer.as_default():
                     print("real:{:s}  pred:{:s} acc:{:f}".format(ground_truths[i], preds[i],
                                                                  compute_accuracy([ground_truths[i]], [preds[i]])))
 
-                checkpoint.save(file_prefix=checkpoint_prefix)
+                # checkpoint.save(file_prefix=checkpoint_prefix)
 
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
 '''
