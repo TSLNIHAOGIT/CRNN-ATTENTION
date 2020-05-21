@@ -117,8 +117,8 @@ dataset = tf.data.Dataset.from_tensor_slices((img_paths_tensor, labels_tensor, l
     .shuffle(10000, reshuffle_each_iteration=True).prefetch(2)
 dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
 
-# encoder = Encoder(units, BATCH_SIZE)
-encoder = Encoder()
+encoder = Encoder(units, BATCH_SIZE)
+# encoder = Encoder()
 decoder = Decoder(vocab_size, embedding_dim, units, BATCH_SIZE)
 
 # global_step = tf.train.get_or_create_global_step()
@@ -141,7 +141,7 @@ checkpoint = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=d
 
 checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
-EPOCHS = 50
+EPOCHS = 100
 
 logdir = "./logs/"
 writer = tf.summary.create_file_writer(logdir)
@@ -176,7 +176,9 @@ with writer.as_default():
             results = np.zeros((BATCH_SIZE, targ.shape[1] - 1), np.int32)
 
             with tf.GradientTape() as tape:
-                enc_output, enc_hidden = encoder(inp)
+                enc_output ,enc_hidden= encoder(inp)
+                #24是自定义pooling层获取
+                # print('enc_output shape',enc_output.shape)#shape=(30, 24, 512)=(batch_size,)
 
                 dec_hidden = enc_hidden
 
