@@ -1,6 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
 import tensorflow as tf
+import numpy as np
+
+'''
+keras有自带的attention、batch_ctc_loss,ctc_decoder可以用，后面可以改为用这个
+'''
 
 # tf.enable_eager_execution()
 
@@ -131,16 +136,25 @@ def Encoder(enc_units, batch_sz):
 
     x = layers.Reshape((-1, 512))(x)
 
-    x=gru(enc_units)(x)#output, state
+    # x=gru(enc_units)(x)#output, state
 
-    # x = layers.Bidirectional(layers.LSTM(units=256, return_sequences=True))(x)
-    # x = layers.Bidirectional(layers.LSTM(units=256, return_sequences=True))(x)
+
+    # [x,_,_,_,fh]= layers.Bidirectional(layers.LSTM(units=256, return_sequences=True,return_state=True))(x)
+    # # print('lstm x={},c={}.h={}'.format(x.shape,c.shape,h.shape))
+    # # print('y',np.array(y).shape,y)
+    #
+    # [x,_,_,_,fh]= layers.Bidirectional(layers.LSTM(units=256, return_sequences=True,return_state=True))(x)
 
     #self inputs=Tensor("input_2:0", shape=(None, 32, None, 3), dtype=float32), outputs=Tensor("dense/Identity:0", shape=(None, None, 63), dtype=float32)
     #inputs=Tensor("input_2:0", shape=(None, 32, None, 3), dtype=float32),
     # outputs=Tensor("bidirectional_1/Identity:0", shape=(None, None, 512), dtype=float32)
+    # x=(x,fh)
+
+    x= layers.Bidirectional(layers.LSTM(units=256, return_sequences=True))(x)
+    x= layers.Bidirectional(layers.LSTM(units=256, return_sequences=True))(x)
+
     print('inputs={}, outputs={}'.format(img_input,x))
-    return keras.Model(inputs=img_input, outputs=x, name='CRNN')
+    return keras.Model(inputs=img_input, outputs=(x,x[:, -1, :]), name='CRNN')
 
 
 
