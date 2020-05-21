@@ -241,7 +241,7 @@ with writer.as_default():
 
             # if batch % 9 == 0:
             if step % 30 == 0:
-                lr = max(0.00001, start * math.pow(0.99, step.numpy()//30))
+                lr = max(0.00001, start * math.pow(0.99, step//30))
                 learning_rate.assign(lr)
                 print('Epoch {} Batch {}/{} Loss {:.4f}  acc {:f}'.format(epoch + 1, batch, N_BATCH,
                                                                           batch_loss.numpy(),
