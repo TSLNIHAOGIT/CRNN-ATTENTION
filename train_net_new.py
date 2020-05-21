@@ -134,14 +134,30 @@ def loss_function(real, pred):
     loss_ = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=real, logits=pred) * mask
     return tf.reduce_mean(loss_)
 
+#
+# checkpoint_dir = './checkpoints'
+# checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+# checkpoint = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=decoder)
+#
+# checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+
+
 
 checkpoint_dir = './checkpoints'
-checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+# checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=decoder)
+manager = tf.train.CheckpointManager(checkpoint, directory=checkpoint_dir , checkpoint_name='ckpt', max_to_keep=5)
 
-checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+status=checkpoint.restore(manager.latest_checkpoint)
+print('status',status)
+print('optimizer.iterations.numpy()',optimizer.iterations.numpy())#optimizer.iterations.numpy() 1062
+lr = max(0.00001, start_learning_rate  * math.pow(0.99, optimizer.iterations.numpy()//30))
+learning_rate.assign(lr)
 
-EPOCHS = 100
+
+
+
+EPOCHS = 200
 
 logdir = "./logs/"
 writer = tf.summary.create_file_writer(logdir)
@@ -168,8 +184,8 @@ with writer.as_default():
         for (batch, (inp, targ, ground_truths)) in enumerate(dataset):
             # print('batch',batch)
             # print('inp shape',inp.shape)#inp shape (64, 32, 100, 1, 1)
-            step=epoch*N_BATCH+batch
-            print('epoch={},step={},batch={}'.format(epoch,step,batch))
+            # step=epoch*N_BATCH+batch
+            # print('epoch={},step={},batch={}'.format(epoch,step,batch))
             loss = 0
             # global_step.assign_add(1)
 
@@ -208,6 +224,9 @@ with writer.as_default():
             gradients = tape.gradient(loss, variables)
 
             optimizer.apply_gradients(zip(gradients, variables))
+            step = optimizer.iterations.numpy()
+            print('step={}'.format(step))
+
 
             preds = [process_result(result, label_lang) for result in results]
 
@@ -220,11 +239,16 @@ with writer.as_default():
             tf.summary.scalar('lr', learning_rate.numpy(),step=step)
             writer.flush()
 
-            if batch % 9 == 0:
+            # if batch % 9 == 0:
+            if step % 30 == 0:
+                lr = max(0.00001, start * math.pow(0.99, step.numpy()//30))
+                learning_rate.assign(lr)
                 print('Epoch {} Batch {}/{} Loss {:.4f}  acc {:f}'.format(epoch + 1, batch, N_BATCH,
                                                                           batch_loss.numpy(),
                                                                           acc))
-            if batch % 9 == 0:
+                path = manager.save(checkpoint_number=step)
+                print("model saved to %s" % path)
+            if step % 30 == 0:
                 for i in range(3):
                     print("real:{:s}  pred:{:s} acc:{:f}".format(ground_truths[i], preds[i],
                                                                  compute_accuracy([ground_truths[i]], [preds[i]])))
