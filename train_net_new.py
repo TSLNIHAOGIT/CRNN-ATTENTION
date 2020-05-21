@@ -137,9 +137,9 @@ def loss_function(real, pred):
 #
 # checkpoint_dir = './checkpoints'
 # checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-# checkpoint = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=decoder)
+# checkpoint_raw = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=decoder)
 #
-# checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+# checkpoint_raw.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
 
 
@@ -253,7 +253,7 @@ with writer.as_default():
                     print("real:{:s}  pred:{:s} acc:{:f}".format(ground_truths[i], preds[i],
                                                                  compute_accuracy([ground_truths[i]], [preds[i]])))
 
-                # checkpoint.save(file_prefix=checkpoint_prefix)
+                # checkpoint_raw.save(file_prefix=checkpoint_prefix)
 
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
 '''

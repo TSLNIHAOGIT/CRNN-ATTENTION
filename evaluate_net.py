@@ -20,8 +20,8 @@ decoder = Decoder(vocab_size, embedding_dim, units, BATCH_SIZE)
 checkpoint_dir = './checkpoints'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(encoder=encoder, decoder=decoder)
-
-checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+manager = tf.train.CheckpointManager(checkpoint, directory=checkpoint_dir , checkpoint_name='ckpt', max_to_keep=5)
+status=checkpoint.restore(manager.latest_checkpoint)
 
 
 def evaluate(encoder, decoder, img_path, label_lang):
@@ -50,6 +50,7 @@ def evaluate(encoder, decoder, img_path, label_lang):
     print("pred :" + preds[0])
 
 
-img_path = "./sample/1_bridleway_9530.jpg"
+# img_path = "./sample/1_bridleway_9530.jpg"
+img_path=r"E:\tsl_file\python_project\CRNN-ATTENTION\example\images\1_E55A.png"
 
 evaluate(encoder=encoder, decoder=decoder, img_path=img_path, label_lang=label_lang)

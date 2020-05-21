@@ -5,6 +5,8 @@ import numpy as np
 
 '''
 keras有自带的attention、batch_ctc_loss,ctc_decoder可以用，后面可以改为用这个
+添加dropout batchnorm resnet等技巧增加精度
+
 '''
 
 # tf.enable_eager_execution()
@@ -101,7 +103,8 @@ def vgg(input_tensor):
 
 def vgg16():
     base_model = VGG16(weights='imagenet', include_top=False,pooling=None)
-    base_model.trainable = False
+    #训练一定epoch之后，设置参数可训练，重新训练
+    base_model.trainable =False# False
     vgg_model = keras.Sequential()
 
     # 将vgg16模型的 卷积层 添加到新模型中（不包含全连接层)

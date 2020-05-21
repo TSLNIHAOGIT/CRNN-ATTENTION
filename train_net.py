@@ -227,7 +227,7 @@ with writer.as_default():
                     print("real:{:s}  pred:{:s} acc:{:f}".format(ground_truths[i], preds[i],
                                                                  compute_accuracy([ground_truths[i]], [preds[i]])))
 
-                # checkpoint.save(file_prefix=checkpoint_prefix)
+                # checkpoint_raw.save(file_prefix=checkpoint_prefix)
 
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
 '''
