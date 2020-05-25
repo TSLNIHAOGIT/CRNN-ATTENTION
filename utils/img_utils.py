@@ -34,7 +34,7 @@ def preprocess_label(label):
     w = '<start> '
     for i in label:
         w += i + ' '
-    w += ' <end>'
+    w += '<end>'
     return w
 
 

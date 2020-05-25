@@ -66,7 +66,6 @@ class Encoder_raw(tf.keras.Model):
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
-
 def vgg(input_tensor):
     """
     The original feature extraction structure from CRNN paper.
