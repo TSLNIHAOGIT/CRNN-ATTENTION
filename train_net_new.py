@@ -192,6 +192,8 @@ dataset = tf.data.Dataset.from_tensor_slices((img_paths_tensor, labels_tensor, l
     .shuffle(10000, reshuffle_each_iteration=True).prefetch(2)
 dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
 
+
+
 encoder = Encoder(units, BATCH_SIZE)
 # encoder = Encoder()
 decoder = Decoder(vocab_size, embedding_dim, units, BATCH_SIZE)
@@ -229,15 +231,25 @@ manager = tf.train.CheckpointManager(checkpoint, directory=checkpoint_dir , chec
 status=checkpoint.restore(manager.latest_checkpoint)
 print('status',status)
 print('optimizer.iterations.numpy()',optimizer.iterations.numpy())#optimizer.iterations.numpy() 1062
-lr = max(0.00001, start_learning_rate  * math.pow(0.99, optimizer.iterations.numpy()//30))
-learning_rate.assign(lr)
+
+
+
+
+
+
+#一开始就用初始化的learning_rate，然后每个epoch都进行一次递减
+learning_rate.assign(start_learning_rate)
 
 # for (batch, (inp, targ, ground_truths, sparse_label)) in enumerate(dataset):
 #     print('sparse_label ss',sparse_label)
 
 
 
-EPOCHS = 400
+EPOCHS = 100
+
+
+
+
 
 logdir = "./logs/"
 writer = tf.summary.create_file_writer(logdir)
@@ -248,17 +260,20 @@ writer = tf.summary.create_file_writer(logdir)
 #     print('batch', batch)
 #     print('inp shape', inp.shape)  # inp shape (64, 32, 100, 1, 1)
 
-gamma=0.9
+gamma=0.99
 
 
 with writer.as_default():
 # if True:
+    '''
+    停止之后下一次继续训练，那么epoch应该继续增加，此处记录的是步数，用步数来计算是第几个epoch
+    '''
     for epoch in range(EPOCHS):
         start = time.time()
 
         total_loss = 0
-        lr = max(0.00001, start_learning_rate * math.pow(0.99, epoch))
-        learning_rate.assign(lr)
+        # lr = max(0.00001, start_learning_rate * math.pow(0.99, epoch))
+        # learning_rate.assign(lr)
         # print('start')
 
         for (batch, (inp, targ, ground_truths,sparse_label)) in enumerate(dataset):
@@ -283,11 +298,12 @@ with writer.as_default():
                 # print('enc_output shape',enc_output.shape)#shape=(30, 24, 512)=(batch_size,)
                 # print('sparse_label_now',sparse_label)
                 # print('ground_truths',ground_truths)
-                indices = tf.where(tf.not_equal(sparse_label, tf.constant(0, dtype=tf.int32)))#sparse_label或者trg
-                values = tf.gather_nd(sparse_label, indices)
-                sparse_labels = tf.SparseTensor(indices, values, dense_shape=tf.shape(sparse_label, out_type=tf.int64))
 
-                batch_loss_ctc = custom_loss(sparse_labels, enc_output)
+                # sparse_label=targ
+                # indices = tf.where(tf.not_equal(sparse_label, tf.constant(0, dtype=tf.int32)))#sparse_label或者trg
+                # values = tf.gather_nd(sparse_label, indices)
+                # sparse_labels = tf.SparseTensor(indices, values, dense_shape=tf.shape(sparse_label, out_type=tf.int64))
+                # batch_loss_ctc = custom_loss(sparse_labels, enc_output)
 
 
                 dec_hidden = enc_hidden
@@ -318,16 +334,17 @@ with writer.as_default():
                 # batch_loss = (loss / int(targ.shape[1]))
                 # batch_loss+=batch_loss_ctc
 
-                print('batch_loss={},batch_loss_ctc={}'.format(batch_loss,batch_loss_ctc))
+                # print('batch_loss={},batch_loss_ctc={}'.format(batch_loss,batch_loss_ctc))
 
                 #要把写到tape里面，否则不对
                 total_loss += batch_loss
-                batch_loss=gamma*batch_loss+(1-gamma)*batch_loss_ctc
+                # batch_loss=gamma*batch_loss+(1-gamma)*batch_loss_ctc
 
             # variables = encoder.variables + decoder.variables
             variables=encoder.trainable_variables+decoder.trainable_variables
 
             gradients = tape.gradient(batch_loss, variables)#loss,batch_ctc_loss
+            gradients, _ = tf.clip_by_global_norm(gradients, 15)
 
             optimizer.apply_gradients(zip(gradients, variables))
             step = optimizer.iterations.numpy()
@@ -346,15 +363,21 @@ with writer.as_default():
             writer.flush()
 
             # if batch % 9 == 0:
-            if step % 30 == 0:
-                lr = max(0.00001, start * math.pow(0.99, step//30))
+            '''
+            n=300
+            batch_size=50
+            n_batch=300/50=6 一个epoch有6个batch(0,1,2,3,4,5)
+            '''
+            if (step+1) % N_BATCH == 0:
+                #这里应该模拟的是一个batch学习率才会进行一次变动
+                lr = max(0.00001, start_learning_rate * math.pow(0.99, (step+1)/N_BATCH))#epoch
                 learning_rate.assign(lr)
                 print('Epoch {} Batch {}/{} Loss {:.4f}  acc {:f}'.format(epoch + 1, batch, N_BATCH,
                                                                           batch_loss.numpy(),
                                                                           acc))
                 path = manager.save(checkpoint_number=step)
                 print("model saved to %s" % path)
-            if step % 30 == 0:
+            # if step % 10 == 0:
                 for i in range(3):
                     print("real:{:s}  pred:{:s} acc:{:f}".format(ground_truths[i], preds[i],
                                                                  compute_accuracy([ground_truths[i]], [preds[i]])))
