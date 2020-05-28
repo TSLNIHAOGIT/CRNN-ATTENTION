@@ -223,7 +223,7 @@ custom_loss=CTCLoss()
 
 
 
-checkpoint_dir = './checkpoints'
+checkpoint_dir = r'E:\tsl_file\python_project\all_models\crnn_attention_checkpoints'
 # checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=decoder)
 manager = tf.train.CheckpointManager(checkpoint, directory=checkpoint_dir , checkpoint_name='ckpt', max_to_keep=5)
@@ -237,8 +237,18 @@ print('optimizer.iterations.numpy()',optimizer.iterations.numpy())#optimizer.ite
 
 
 
-#一开始就用初始化的learning_rate，然后每个epoch都进行一次递减
-learning_rate.assign(start_learning_rate)
+#一开始就用变化的学习率，然后每个epoch都进行一次递减，继续训练时从上次的学习率继续使用
+
+
+
+
+start_step=optimizer.iterations.numpy()
+print('start_step',start_step,N_BATCH)#start_step 495 4
+if start_step==0:
+    learning_rate.assign(start_learning_rate)
+else:
+    lr = max(0.00001, start_learning_rate * math.pow(0.99, (start_step+1)/N_BATCH+1))#epoch
+    learning_rate.assign(lr)
 
 # for (batch, (inp, targ, ground_truths, sparse_label)) in enumerate(dataset):
 #     print('sparse_label ss',sparse_label)
